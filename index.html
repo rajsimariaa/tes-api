@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚡ Shoonya Pro - Live Market Dashboard</title>
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen flex flex-col antialiased overflow-x-hidden">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md px-6 py-4 md:px-12 sticky top-0 z-30 shadow-lg">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div class="flex items-center gap-3">
+        <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-500/20">
+          <i class="fa-solid fa-bolt text-2xl animate-pulse"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-200 to-emerald-400">Shoonya <span class="text-white">Live</span></h1>
+          <p class="text-xs text-slate-400">High-Performance Real-Time Market Ticker</p>
+        </div>
+      </div>
+
+      <!-- Connection Status Badges -->
+      <div class="flex items-center gap-3 text-sm">
+        <span id="proxy-status" class="px-3.5 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-2">
+          <i class="fa-solid fa-circle-nodes animate-pulse"></i> Proxy Server: Connecting
+        </span>
+        <span id="shoonya-status" class="px-3.5 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center gap-2">
+          <i class="fa-solid fa-circle-dot"></i> Shoonya: Disconnected
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <div class="bg-slate-900 border border-slate-800 text-white rounded-xl shadow-2xl p-4 flex items-center gap-3 max-w-sm">
+      <div id="toast-icon" class="text-xl"></div>
+      <div>
+        <h5 id="toast-title" class="font-extrabold text-sm text-slate-100">Toast Title</h5>
+        <p id="toast-message" class="text-xs text-slate-400 mt-0.5">Toast message content goes here.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Layout -->
+  <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+    
+    <!-- Left Column: Authentication & Control Panel (4 Columns) -->
+    <section class="lg:col-span-4 flex flex-col gap-6">
+      
+      <!-- Login & Credentials Panel -->
+      <div class="glass-panel p-6 flex flex-col justify-between relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <i class="fa-solid fa-key text-blue-400 text-lg"></i>
+            <h3 class="text-lg font-bold text-white">Secure API Credentials</h3>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed mb-6">
+            Enter your API credentials below. If you have already configured the local <code class="text-blue-300 bg-slate-950 px-1 py-0.5 rounded">.env</code> file, you can leave these fields blank and hit "Establish Real-Time Feed" to load values automatically.
+          </p>
+
+          <form id="login-form" class="space-y-4" onsubmit="handleLoginSubmit(event)">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">User ID</label>
+              <input type="text" id="api-user-id" placeholder="E.g., FA12345"
+                class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:bg-slate-950 transition-all">
+            </div>
+            
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Password</label>
+              <input type="password" id="api-password" placeholder="••••••••"
+                class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:bg-slate-950 transition-all">
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex justify-between">
+                <span>TOTP Secret Key</span>
+                <span class="text-slate-500 text-[9px]">Autogenerates 2FA code</span>
+              </label>
+              <input type="password" id="api-totp-secret" placeholder="E.g., ORXW633PN5XW633P..."
+                class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:bg-slate-950 transition-all">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">API Secret Key</label>
+                <input type="password" id="api-secret" placeholder="App Secret Key"
+                  class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:bg-slate-950 transition-all">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Vendor Code</label>
+                <input type="text" id="api-vendor-code" placeholder="E.g., FA12345_UAT"
+                  class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:bg-slate-950 transition-all">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">IMEI / MAC Address</label>
+              <input type="text" id="api-imei" placeholder="E.g., 12345678"
+                class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:bg-slate-950 transition-all">
+            </div>
+
+            <button type="submit" id="login-btn"
+              class="w-full mt-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2">
+              <i class="fa-solid fa-link"></i> Establish Real-Time Feed
+            </button>
+            <button type="button" id="demo-btn" onclick="startDemoMode()"
+              class="w-full mt-2 bg-slate-805/90 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl transition-all border border-slate-800 flex items-center justify-center gap-2 text-xs">
+              <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> Explore in Simulated Demo Mode
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Live Stream Console Log -->
+      <div class="glass-panel p-6 flex flex-col flex-grow min-h-[160px] md:min-h-[220px]">
+        <div class="flex justify-between items-center mb-3">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i class="fa-solid fa-terminal text-blue-400"></i> Local Event Logger
+          </h4>
+          <button onclick="clearConsoleLog()" class="text-[10px] text-slate-500 hover:text-slate-300">Clear</button>
+        </div>
+        <div id="event-logger" class="bg-slate-950/80 border border-slate-850 rounded-xl p-3 flex-grow overflow-y-auto font-mono text-[10px] text-emerald-400 leading-relaxed max-h-[200px]">
+          <div>[Proxy] Loaded. Waiting for user connection...</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Center/Right Column: Live Board Stage (8 Columns) -->
+    <section class="lg:col-span-8 flex flex-col gap-6">
+      
+      <!-- Live Market Grid Section -->
+      <div class="glass-panel p-6 flex flex-col">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+          <div>
+            <h3 class="text-xl font-extrabold text-white flex items-center gap-2">
+              📈 Live Stock Exchange Ticker
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Indian Top Stocks on NSE. Sparklines show live tick price actions.</p>
+          </div>
+
+          <!-- Add custom symbol form -->
+          <div class="flex gap-2 w-full sm:w-auto">
+            <input type="text" id="search-symbol-input" placeholder="NSE|SymbolToken (e.g. NSE|3045)"
+              class="w-full sm:w-64 bg-slate-950/50 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:bg-slate-950 transition-all">
+            <button onclick="handleAddCustomSymbol()"
+              class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-1.5 rounded-lg text-xs transition shadow flex items-center justify-center gap-1">
+              <i class="fa-solid fa-plus"></i> Add
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Stock Cards Ticker Board -->
+        <div id="live-ticker-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Dynamic stock cards go here -->
+          <div class="col-span-full py-16 text-center text-slate-500 flex flex-col items-center justify-center">
+            <i class="fa-solid fa-arrow-trend-up text-5xl mb-4 text-slate-700 animate-bounce"></i>
+            <p class="text-sm font-semibold">Feed is idle. Connect your Shoonya API credentials above to start streaming ticks.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detailed Price Chart Section -->
+      <div class="glass-panel p-6 flex flex-col flex-grow min-h-[300px]">
+        <div class="flex justify-between items-center mb-4">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-chart-area text-indigo-400"></i> Real-Time Technical Feed
+            </h3>
+            <p class="text-xs text-slate-400" id="chart-subtitle">Select any active stock card above to visualize high-resolution ticks</p>
+          </div>
+          
+          <div class="text-right">
+            <span class="text-[9px] uppercase font-bold text-slate-500 block">Active Selected</span>
+            <strong id="active-symbol-indicator" class="text-xs font-black text-indigo-400">RELIANCE (NSE)</strong>
+          </div>
+        </div>
+
+        <!-- High-fidelity Chart container -->
+        <div class="flex-grow bg-slate-950/50 border border-slate-900 rounded-xl relative p-4 min-h-[220px] flex items-center justify-center">
+          <canvas id="active-stock-chart" class="w-full h-full block z-10"></canvas>
+          <div id="chart-placeholder-msg" class="absolute inset-0 flex flex-col items-center justify-center text-slate-600 gap-2 pointer-events-none">
+            <i class="fa-solid fa-chart-line text-4xl"></i>
+            <p class="text-xs font-medium">Connect API to visualize ticks</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-900 bg-slate-950/60 py-6 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+      <p>© 2026 Shoonya Pro Dashboard. Connected safely locally.</p>
+      <div class="flex gap-4">
+        <a href="https://shoonya.com/" target="_blank" class="hover:text-slate-300">Shoonya Portal</a>
+        <span class="text-slate-800">|</span>
+        <a href="https://github.com/Shoonya-Dev" target="_blank" class="hover:text-slate-300 font-semibold text-blue-400">Official GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="client.js"></script>
+</body>
+</html>
